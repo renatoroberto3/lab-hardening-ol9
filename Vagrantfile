@@ -10,6 +10,7 @@ Vagrant.configure("2") do |config|
         echo "Configurando a máquina..."
         dnf update -y || apt-get update -y
         dnf install -y openssh-server ansible neofetch htop vim lynis git || apt-get install -y ansible git
+        timedatectl set-timezone America/Sao_Paulo || timedatectl set-timezone America/Sao_Paulo
         echo "Máquina configurada."
       SHELL
     end
