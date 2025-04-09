@@ -1,31 +1,27 @@
 #!/bin/bash
 #script cria a base do projeto de hardening, pode ser usado apenas local ou repositório no git
-# Define the base directory name
+# nome do dir pode ser o nome do repo remoto pra facilitar
 base_dir="REPO-BASE"
 
 # Create the base directory if it doesn't exist
 mkdir -p "$base_dir"
 
-# Create the main directories inside the base directory
+# Principais subdirs
+mkdir -p "$base_dir/inventory/"
 mkdir -p "$base_dir/playbooks"
-mkdir -p "$base_dir/inventory"
-mkdir -p "$base_dir/roles"
+mkdir -p "$base_dir/roles/audit/tasks"
+mkdir -p "$base_dir/roles/remediation/tasks"
 
-# Create the subdirectory in inventory
-mkdir -p "$base_dir/inventory/hosts"
-
-# Create the files
+# Principais arquivos
 touch "$base_dir/ansible.cfg"
 touch "$base_dir/AUDIT.log"
 touch "$base_dir/README.md"
-
-# Create the playbooks
+touch "$base_dir/inventory/hosts"
 touch "$base_dir/playbooks/audit.yml"
 touch "$base_dir/playbooks/remediation.yml"
 
-# Create the roles directories
-mkdir -p "$base_dir/roles/audit"
-mkdir -p "$base_dir/roles/hardening"
-mkdir -p "$base_dir/roles/remediation"
+# Create the tasks main files
+touch "$base_dir/roles/audit/tasks/main.yml"
+touch "$base_dir/roles/remediation/tasks/main.yml"
 
-echo "Esqueleto de diretórios e arquivos criado com sucesso dentro de '$base_dir'!"
+echo "Estrutura de diretórios e arquivos criado com sucesso dentro de '$base_dir'!"
