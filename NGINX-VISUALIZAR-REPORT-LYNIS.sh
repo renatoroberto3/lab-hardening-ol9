@@ -60,54 +60,162 @@ EOF
 echo "🧾 Criando index.html para visualização dos .dat..."
 cat <<'HTML' | sudo tee /var/www/html/index.html > /dev/null
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <title>Relatórios Lynis (.dat)</title>
     <style>
-        body { font-family: monospace; padding: 20px; background: #f4f4f4; }
-        h1 { color: #333; }
-        ul { list-style: none; padding: 0; }
-        li { margin-bottom: 5px; }
-        a { text-decoration: none; color: blue; cursor: pointer; }
-        a:hover { text-decoration: underline; }
-        pre { background: white; padding: 15px; border: 1px solid #ccc; margin-top: 20px; max-height: 600px; overflow-y: auto; }
+        body {
+            font-family: 'Courier New', monospace;
+            background: #f9f9f9;
+            color: #333;
+            padding: 20px;
+            margin: 0;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        #container {
+            display: flex;
+            gap: 20px;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            width: 250px;
+            border-right: 1px solid #ccc;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        li {
+            margin-bottom: 5px;
+        }
+
+        a {
+            display: block;
+            padding: 8px;
+            border-radius: 5px;
+            text-decoration: none;
+            color: #2980b9;
+            background: #ecf0f1;
+            transition: background 0.3s;
+        }
+
+        a:hover {
+            background: #d0e4f1;
+        }
+
+        pre {
+            flex: 1;
+            background: #fff;
+            padding: 15px;
+            border: 1px solid #ccc;
+            max-height: 600px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .highlight {
+            background-color: #fffae6;
+            font-weight: bold;
+            color: #e67e22;
+        }
+
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+
+        .loading {
+            font-style: italic;
+            color: #888;
+        }
     </style>
 </head>
 <body>
     <h1>Relatórios do Lynis (.dat)</h1>
-    <ul id="lista"></ul>
-    <pre id="conteudo">Selecione um relatório para visualizar.</pre>
+    <div id="container">
+        <ul id="lista"></ul>
+        <pre id="conteudo" class="loading">Carregando lista de relatórios...</pre>
+    </div>
 
     <script>
+        const lista = document.getElementById('lista');
+        const conteudo = document.getElementById('conteudo');
+
+        function highlightHardeningIndex(text) {
+            return text.replace(
+                /^.*hardening_index=\d+.*$/gmi,
+                match => `<span class="highlight">${match}</span>`
+            );
+        }
+
         fetch('/lynis-reports/')
             .then(res => res.text())
             .then(html => {
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
-                const links = Array.from(doc.querySelectorAll('a'))
-                    .filter(a => a.href.endsWith('.dat'));
 
-                const lista = document.getElementById('lista');
-                const conteudo = document.getElementById('conteudo');
+                const links = Array.from(doc.querySelectorAll('a'))
+                    .filter(a => a.href.endsWith('.dat') && a.href.startsWith(location.origin));
+
+                if (links.length === 0) {
+                    conteudo.classList.remove('loading');
+                    conteudo.innerHTML = '<span class="error">Nenhum relatório encontrado.</span>';
+                    return;
+                }
+
+                conteudo.classList.remove('loading');
+                conteudo.textContent = 'Selecione um relatório para visualizar.';
 
                 links.forEach(link => {
                     const nome = link.href.split('/').pop();
                     const li = document.createElement('li');
                     const a = document.createElement('a');
                     a.textContent = nome;
-                    a.onclick = () => {
+                    a.href = '#';
+
+                    a.onclick = (e) => {
+                        e.preventDefault();
+                        conteudo.classList.add('loading');
+                        conteudo.textContent = 'Carregando conteúdo...';
+
                         fetch(`/lynis-reports/${nome}`)
                             .then(resp => resp.text())
-                            .then(data => conteudo.textContent = data)
-                            .catch(err => conteudo.textContent = 'Erro ao carregar o arquivo.');
+                            .then(data => {
+                                conteudo.classList.remove('loading');
+                                conteudo.innerHTML = highlightHardeningIndex(
+                                    data.replace(/[&<>"']/g, function (m) {
+                                        return {
+                                            '&': '&amp;',
+                                            '<': '&lt;',
+                                            '>': '&gt;',
+                                            '"': '&quot;',
+                                            "'": '&#39;'
+                                        }[m];
+                                    })
+                                );
+                            })
+                            .catch(err => {
+                                conteudo.classList.remove('loading');
+                                conteudo.innerHTML = '<span class="error">Erro ao carregar o arquivo.</span>';
+                                console.error(err);
+                            });
                     };
+
                     li.appendChild(a);
                     lista.appendChild(li);
                 });
             })
             .catch(err => {
-                document.body.innerHTML += '<p>Erro ao carregar a lista de relatórios.</p>';
+                conteudo.classList.remove('loading');
+                conteudo.innerHTML = '<span class="error">Erro ao carregar a lista de relatórios.</span>';
                 console.error(err);
             });
     </script>
