@@ -6,11 +6,15 @@
 # Nome do auditor (ajuste se quiser)
 AUDITOR_NAME="Renato"
 
-echo "🔧 Instalando NGINX..."
-sudo dnf install -y nginx
+echo "🔧 Instalando NGINX e ferramentas..."
+sudo dnf install -y nginx policycoreutils-python-utils firewalld
 
-echo "🚀 Habilitando e iniciando o serviço NGINX..."
-sudo systemctl enable --now nginx
+echo "🚀 Habilitando e iniciando serviços..."
+sudo systemctl enable --now nginx firewalld
+
+echo "🔥 Liberando NGINX no Firewalld..."
+sudo firewall-cmd --permanent --add-service=http
+sudo firewall-cmd --reload
 
 echo "📁 Criando diretórios para os relatórios..."
 sudo mkdir -p /var/www/html/lynis-reports
@@ -19,6 +23,14 @@ echo "🔐 Ajustando permissões e contextos..."
 sudo chown -R nginx:nginx /var/www/html
 sudo chmod -R 755 /var/www/html
 sudo chcon -Rt httpd_sys_content_t /var/www/html 2>/dev/null
+
+echo "🛡️ Verificando e aplicando política SELinux (se necessário)..."
+if command -v semanage &> /dev/null; then
+    sudo semanage fcontext -a -t httpd_sys_content_t "/var/www/html(/.*)?"
+    sudo restorecon -Rv /var/www/html
+else
+    echo "⚠️ 'semanage' não encontrado. Pulando configuração SELinux..."
+fi
 
 echo "📝 Criando arquivo de configuração do NGINX..."
 cat <<EOF | sudo tee /etc/nginx/conf.d/lynis-reports.conf > /dev/null
@@ -78,6 +90,7 @@ cat <<'HTML' | sudo tee /var/www/html/index.html > /dev/null
 </body>
 </html>
 HTML
+
 echo "🔄 Garantir permissionamento pro user do NGINX..."
 sudo chown -R nginx:nginx /var/www/
 
@@ -96,4 +109,3 @@ echo "🎉 Pronto!"
 #################################################################
 ############### CRIADO PARA ORACLE LINUX 9 ######################
 #################################################################
-
