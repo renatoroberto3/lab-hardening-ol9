@@ -1,0 +1,89 @@
+🔐 1. Gerar certificados .pem autoassinados (para teste)
+Você vai fazer isso na VM que vai receber os logs (a "servidora").
+
+📍 Servidora de logs (ex: 192.168.50.42)
+bash
+Copiar
+Editar
+# Criar diretórios se ainda não existirem
+sudo mkdir -p /etc/ssl/private /etc/ssl/certs /etc/ssl/ca
+
+# Gerar CA (autoridade certificadora)
+openssl req -x509 -new -nodes -days 365 \
+  -subj "/CN=Local CA" \
+  -keyout /etc/ssl/private/ca.key \
+  -out /etc/ssl/ca/trusted.pem
+
+# Gerar chave privada do servidor
+openssl genrsa -out /etc/ssl/private/journal-upload.key 2048
+
+# Criar CSR (pedido de certificado)
+openssl req -new \
+  -key /etc/ssl/private/journal-upload.key \
+  -subj "/CN=192.168.50.42" \
+  -out /etc/ssl/certs/journal-upload.csr
+
+# Assinar o certificado com a CA
+openssl x509 -req -in /etc/ssl/certs/journal-upload.csr \
+  -CA /etc/ssl/ca/trusted.pem -CAkey /etc/ssl/private/ca.key \
+  -CAcreateserial -out /etc/ssl/certs/journal-upload.pem -days 365
+✅ Agora você tem:
+Arquivo	Função
+/etc/ssl/private/ca.key	Chave da CA
+/etc/ssl/ca/trusted.pem	Certificado da CA
+/etc/ssl/private/journal-upload.key	Chave do servidor
+/etc/ssl/certs/journal-upload.pem	Certificado do servidor
+📨 2. Copiar arquivos para a VM que envia os logs (cliente)
+Na VM Debian 12 (cliente):
+
+bash
+Copiar
+Editar
+# Diretórios padrão
+sudo mkdir -p /etc/ssl/ca
+
+# Copie da VM servidor:
+# /etc/ssl/ca/trusted.pem  -->  /etc/ssl/ca/trusted.pem  (cliente)
+Esse é o único arquivo que o cliente precisa: a CA (trusted.pem) para confiar no servidor.
+
+🛠️ 3. Configurar systemd-journal-upload na cliente
+Edite o arquivo /etc/systemd/journal-upload.conf na VM cliente:
+
+ini
+Copiar
+Editar
+[Upload]
+URL=https://192.168.50.42:19532
+ServerKeyFile=/etc/ssl/private/journal-upload.pem
+ServerCertificateFile=/etc/ssl/certs/journal-upload.pem
+TrustedCertificateFile=/etc/ssl/ca/trusted.pem
+⚠️ Importante:
+Você também precisa copiar o journal-upload.key e o journal-upload.pem para a VM cliente, caso vá autenticar o cliente (opcional).
+
+Se não for autenticar o cliente e só confiar no servidor, só a TrustedCertificateFile basta.
+
+📡 4. Iniciar os serviços
+Servidor:
+bash
+Copiar
+Editar
+sudo systemctl enable --now systemd-journal-remote.socket
+sudo systemctl enable --now systemd-journal-remote.service
+Cliente:
+bash
+Copiar
+Editar
+sudo systemctl enable --now systemd-journal-upload.service
+🔍 5. Verificar
+No servidor:
+Logs recebidos devem cair em:
+
+bash
+Copiar
+Editar
+/var/log/journal/remote/
+No cliente:
+bash
+Copiar
+Editar
+journalctl -u systemd-journal-upload
