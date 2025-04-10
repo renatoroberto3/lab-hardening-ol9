@@ -79,9 +79,9 @@ cat <<'HTML' | sudo tee /var/www/html/index.html > /dev/null
 
                 const lista = document.getElementById('lista');
                 links.forEach(link => {
-                    const li = document.createElement('li');
                     const nome = link.href.split('/').pop();
-                    li.innerHTML = `<a href="${link.href}">${nome}</a>`;
+                    const li = document.createElement('li');
+                    li.innerHTML = `<a href="/lynis-reports/${nome}">${nome}</a>`;
                     lista.appendChild(li);
                 });
             })
