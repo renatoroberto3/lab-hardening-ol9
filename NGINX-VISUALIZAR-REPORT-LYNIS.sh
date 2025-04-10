@@ -63,6 +63,7 @@ cat <<'HTML' | sudo tee /var/www/html/index.html > /dev/null
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta charset="UTF-8">
     <title>Relatórios Lynis (.dat)</title>
     <style>
@@ -123,9 +124,9 @@ cat <<'HTML' | sudo tee /var/www/html/index.html > /dev/null
         }
 
         .highlight {
-            background-color: #fffae6;
+            background-color: #ff0000;
             font-weight: bold;
-            color: #e67e22;
+            color: #ffffff;
         }
 
         .error {
@@ -220,6 +221,14 @@ cat <<'HTML' | sudo tee /var/www/html/index.html > /dev/null
                 console.error(err);
             });
     </script>
+    <footer style="margin-top: 40px; font-size: 0.9em; color: #555; border-top: 1px solid #ccc; padding-top: 10px;">
+        <p>
+            Para gerar um novo relatório manualmente, execute:
+            <code>
+                sudo lynis audit system --auditor "Renato" --report-file "/var/www/html/lynis-reports/lynis-report-$(date +%F).dat"; chown -R nginx:nginx /var/www/html/lynis-reports/
+            </code>
+        </p>
+    </footer>    
 </body>
 </html>
 HTML
