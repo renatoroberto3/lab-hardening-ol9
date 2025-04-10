@@ -45,11 +45,14 @@ server {
         autoindex on;
         try_files \$uri \$uri/ =404;
     }
-
     location /lynis-reports/ {
-        autoindex on;
-        try_files \$uri \$uri/ =404;
+    autoindex on;
+    try_files $uri $uri/ =404;
+    types { 
+        text/plain dat;
     }
+    default_type text/plain;
+}
 }
 EOF
 
