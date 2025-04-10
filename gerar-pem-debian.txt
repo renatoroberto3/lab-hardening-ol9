@@ -2,9 +2,7 @@
 Você vai fazer isso na VM que vai receber os logs (a "servidora").
 
 📍 Servidora de logs (ex: 192.168.50.42)
-bash
-Copiar
-Editar
+
 # Criar diretórios se ainda não existirem
 sudo mkdir -p /etc/ssl/private /etc/ssl/certs /etc/ssl/ca
 
@@ -36,9 +34,7 @@ Arquivo	Função
 📨 2. Copiar arquivos para a VM que envia os logs (cliente)
 Na VM Debian 12 (cliente):
 
-bash
-Copiar
-Editar
+
 # Diretórios padrão
 sudo mkdir -p /etc/ssl/ca
 
@@ -64,26 +60,18 @@ Se não for autenticar o cliente e só confiar no servidor, só a TrustedCertifi
 
 📡 4. Iniciar os serviços
 Servidor:
-bash
-Copiar
-Editar
+
 sudo systemctl enable --now systemd-journal-remote.socket
 sudo systemctl enable --now systemd-journal-remote.service
 Cliente:
-bash
-Copiar
-Editar
+
 sudo systemctl enable --now systemd-journal-upload.service
 🔍 5. Verificar
 No servidor:
 Logs recebidos devem cair em:
 
-bash
-Copiar
-Editar
+
 /var/log/journal/remote/
 No cliente:
-bash
-Copiar
-Editar
+
 journalctl -u systemd-journal-upload
