@@ -64,10 +64,20 @@ cat <<'HTML' | sudo tee /var/www/html/index.html > /dev/null
 <head>
     <meta charset="UTF-8">
     <title>Relatórios Lynis (.dat)</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #f4f4f4; }
+        h1 { color: #333; }
+        ul { list-style: none; padding: 0; }
+        li { margin-bottom: 5px; }
+        a { text-decoration: none; color: blue; cursor: pointer; }
+        a:hover { text-decoration: underline; }
+        pre { background: white; padding: 15px; border: 1px solid #ccc; margin-top: 20px; max-height: 600px; overflow-y: auto; }
+    </style>
 </head>
 <body>
     <h1>Relatórios do Lynis (.dat)</h1>
     <ul id="lista"></ul>
+    <pre id="conteudo">Selecione um relatório para visualizar.</pre>
 
     <script>
         fetch('/lynis-reports/')
@@ -79,15 +89,25 @@ cat <<'HTML' | sudo tee /var/www/html/index.html > /dev/null
                     .filter(a => a.href.endsWith('.dat'));
 
                 const lista = document.getElementById('lista');
+                const conteudo = document.getElementById('conteudo');
+
                 links.forEach(link => {
                     const nome = link.href.split('/').pop();
                     const li = document.createElement('li');
-                    li.innerHTML = `<a href="/lynis-reports/${nome}">${nome}</a>`;
+                    const a = document.createElement('a');
+                    a.textContent = nome;
+                    a.onclick = () => {
+                        fetch(`/lynis-reports/${nome}`)
+                            .then(resp => resp.text())
+                            .then(data => conteudo.textContent = data)
+                            .catch(err => conteudo.textContent = 'Erro ao carregar o arquivo.');
+                    };
+                    li.appendChild(a);
                     lista.appendChild(li);
                 });
             })
             .catch(err => {
-                document.body.innerHTML += '<p>Erro ao carregar os relatórios.</p>';
+                document.body.innerHTML += '<p>Erro ao carregar a lista de relatórios.</p>';
                 console.error(err);
             });
     </script>
