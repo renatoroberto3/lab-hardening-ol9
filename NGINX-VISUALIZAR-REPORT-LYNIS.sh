@@ -36,22 +36,23 @@ echo "📝 Criando arquivo de configuração do NGINX..."
 cat <<EOF | sudo tee /etc/nginx/conf.d/lynis-reports.conf > /dev/null
 server {
     listen 80;
-    server_name localhost;
+    server_name www.oreacle9-1-lynisreport.com;
 
     root /var/www/html;
     index index.html;
 
     location / {
         autoindex on;
-        try_files \$uri \$uri/ =404;
+        try_files $uri $uri/ =404;
     }
     location /lynis-reports/ {
     autoindex on;
     try_files $uri $uri/ =404;
-    types { 
+    types {
         text/plain dat;
     }
     default_type text/plain;
+    add_header Content-Type text/plain;
 }
 }
 EOF
