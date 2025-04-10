@@ -21,6 +21,7 @@ sudo mkdir -p /var/www/html/lynis-reports
 
 echo "🔐 Ajustando permissões e contextos..."
 sudo chown -R nginx:nginx /var/www/html
+sudo chown -R /etc/nginx/
 sudo chmod -R 755 /var/www/html
 sudo chcon -Rt httpd_sys_content_t /var/www/html 2>/dev/null
 
