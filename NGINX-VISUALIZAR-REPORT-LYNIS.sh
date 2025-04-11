@@ -167,7 +167,8 @@ cat <<'HTML' | sudo tee /var/www/html/index.html > /dev/null
                 const doc = parser.parseFromString(html, 'text/html');
 
                 const links = Array.from(doc.querySelectorAll('a'))
-                    .filter(a => a.href.endsWith('.dat') && a.href.startsWith(location.origin));
+                .filter(a => a.href.match(/lynis-report-.*\.(txt|dat)$/));
+
 
                 if (links.length === 0) {
                     conteudo.classList.remove('loading');
@@ -227,7 +228,7 @@ cat <<'HTML' | sudo tee /var/www/html/index.html > /dev/null
         <p>
             Para gerar um novo relatório manualmente, execute:
             <code>
-                sudo lynis audit system --auditor "Renato" --report-file "/var/www/html/lynis-reports/lynis-report-$(date +%F).dat"; chown -R nginx:nginx /var/www/html/lynis-reports/
+                sudo lynis audit system --auditor "Renato" --report-file "/var/log/lynis-report.dat"; grep -E 'os_version=|kernel_version=|linux_kernel_version=|hostname=|hardening_index=' /var/log/lynis-report.dat > /var/www/html/lynis-reports/lynis-report-posthardening-$DATA.txt; chown -R nginx:nginx /var/www/html/lynis-reports/
             </code>
         </p>
     </footer>    
