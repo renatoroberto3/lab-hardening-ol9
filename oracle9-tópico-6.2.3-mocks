@@ -1,0 +1,90 @@
+README - Simulação de Ambiente para Testes de Hardening (Mocks)
+===============================================================
+
+Este documento serve para simular APROVADO e REPROVADO nos tópicos de hardening relacionados a rsyslog e logrotate. Ideal para ambiente de lab onde não se pode configurar à vera.
+
+---------------------------------------------------------------
+6.2.3.5 Ensure permissions on all logfiles are configured
+---------------------------------------------------------------
+
+✔️ APROVADO:
+  - Presença de linha no rsyslog.conf ou rsyslog.d/*.conf:
+    $FileCreateMode 0640
+
+⚠️ REPROVADO:
+  - Inserir ou alterar para:
+    $FileCreateMode 0666
+
+---------------------------------------------------------------
+6.2.3.6 Ensure rsyslog is configured to send logs to a remote log host
+---------------------------------------------------------------
+
+✔️ APROVADO:
+  - Adicionar linha:
+    *.* action(type="omfwd" target="loghost.example.com" port="514" protocol="tcp")
+
+⚠️ REPROVADO:
+  - Comentar ou remover qualquer linha com:
+    action(type="omfwd"...)
+
+---------------------------------------------------------------
+6.2.3.7 Ensure rsyslog is not configured to receive logs from a remote client
+---------------------------------------------------------------
+
+✔️ APROVADO:
+  - Não conter as linhas abaixo:
+    module(load="imtcp")
+    input(type="imtcp" port="514")
+
+⚠️ REPROVADO:
+  - Adicionar ao rsyslog.conf ou algum .conf:
+    module(load="imtcp")
+    input(type="imtcp" port="514")
+
+---------------------------------------------------------------
+6.2.3.8 Ensure rsyslog logrotate is configured
+---------------------------------------------------------------
+
+✔️ APROVADO:
+  - Presença de /etc/logrotate.d/rsyslog com conteúdo tipo:
+
+    /var/log/cron
+    /var/log/maillog
+    /var/log/messages
+    /var/log/secure
+    /var/log/spooler {
+        rotate 4
+        weekly
+        missingok
+        notifempty
+        compress
+        delaycompress
+        sharedscripts
+        postrotate
+            /usr/bin/systemctl -s HUP kill rsyslog.service >/dev/null 2>&1 || true
+        endscript
+    }
+
+  - Ou conteúdo similar em /etc/logrotate.conf
+
+⚠️ REPROVADO:
+  - Simular com:
+    mv /etc/logrotate.conf /etc/logrotate.conf.bkp
+    mkdir -p /etc/logrotate.d/disabled
+    mv /etc/logrotate.d/* /etc/logrotate.d/disabled/
+
+  - Ou forçar no script:
+    l_output="\n- rsyslog está em uso e logrotate NÃO está configurado."
+
+---------------------------------------------------------------
+Dica de reset pós-mocks
+---------------------------------------------------------------
+
+reset_lab.sh:
+-------------
+#!/bin/bash
+mv /etc/logrotate.conf.bkp /etc/logrotate.conf 2>/dev/null
+mv /etc/logrotate.d/disabled/* /etc/logrotate.d/ 2>/dev/null
+rmdir /etc/logrotate.d/disabled 2>/dev/null
+echo "Ambiente restaurado!"
+
