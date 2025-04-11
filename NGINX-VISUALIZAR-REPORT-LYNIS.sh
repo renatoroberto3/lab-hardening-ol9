@@ -37,7 +37,7 @@ echo "📝 Criando arquivo de configuração do NGINX..."
 cat <<EOF | sudo tee /etc/nginx/conf.d/lynis-reports.conf > /dev/null
 server {
     listen 80;
-    server_name www.oreacle9-1-lynisreport.com;
+    server_name _;
 
     root /var/www/html;
     index index.html;
@@ -46,16 +46,18 @@ server {
         autoindex on;
         try_files $uri $uri/ =404;
     }
+
     location /lynis-reports/ {
-    autoindex on;
-    try_files $uri $uri/ =404;
-    types {
-        text/plain dat;
+        autoindex on;
+        try_files $uri $uri/ =404;
+        types {
+            text/plain dat;
+        }
+        default_type text/plain;
+        add_header Content-Type text/plain;
     }
-    default_type text/plain;
-    add_header Content-Type text/plain;
 }
-}
+
 EOF
 
 echo "🧾 Criando index.html para visualização dos .dat..."
@@ -241,7 +243,7 @@ sudo nginx -t && sudo systemctl reload nginx
 
 echo "✅ Gerando relatório de exemplo do Lynis..."
 sudo lynis audit system --auditor "$AUDITOR_NAME" \
-  --report-file "/var/www/html/lynis-reports/lynis-report-$(date +%F).dat"
+  --report-file "/var/www/html/lynis-reports/lynis-report-$(date +%F).dat" ; chown -R nginx:nginx /var/www/html/lynis-reports/
 
 IP=$(hostname -I | awk '{print $1}')
 echo -e "\n🌐 Acesse via navegador: http://$IP/\n"
